@@ -3,7 +3,7 @@ const Review = require("../models/reviewModel")
 // const hashPassword = require("../utils/hashPassword")
 const { hashPassword, comparePasswords } = require("../utils/hashPassword")
 const generateAuthToken = require("../utils/generateAuthToken")
-const Product = require("../models/ProductModel")
+const Product = require("../models/productModel")
 // const Review = require("../models/reviewModel")
 
 const getUsers = async (req, res, next) => {

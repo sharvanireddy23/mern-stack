@@ -1,6 +1,6 @@
 const Order = require("../models/orderModel");
 const mongoose = require("mongoose");
-const Product = require("../models/ProductModel");
+const Product = require("../models/productModel");
 const ObjectId = require("mongodb").ObjectId;
 
 const getUserOrders = async (req, res, next) => {
