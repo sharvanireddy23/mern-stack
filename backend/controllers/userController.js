@@ -141,20 +141,21 @@ const getUserProfile = async (req, res, next) => {
 }
 
 const writeReview = async (req, res, next) => {
+    let session;
     try {
-        //database transaction
-        const session = await Review.startSession();
-        //get comment and rating
+      
+        session = await Review.startSession();
+        session.startTransaction();
+
         const { comment, rating } = req.body;
-        //validate request
-        if (!(comment && rating)) {
-            return res.status(400).send("All inputs are required")
+
+        if (!comment || typeof rating === 'undefined' || isNaN(Number(rating))) {
+            return res.status(400).send("All inputs are required and rating must be a valid number");
         }
 
-        //create review id manually
-        const ObjectId = require("mongodb").ObjectId
-        let reviewId = new ObjectId
-        session.startTransaction()
+        const ObjectId = require("mongodb").ObjectId;
+        let reviewId = new ObjectId();
+
         await Review.create([
             {
                 _id: reviewId,
@@ -162,38 +163,49 @@ const writeReview = async (req, res, next) => {
                 rating: Number(rating),
                 user: { _id: req.user._id, name: req.user.name + " " + req.user.lastName }
             }
-        ], { session: session })
-        const product = await Product.findById(req.params.productId).populate("reviews").session(session)
-        // res.send(product)
-        const alreadyReviewed = product.reviews.find((rev) => rev.user._id.toString()
-            === req.user._id.toString());
-        if (alreadyReviewed) {
-            session.abortTransaction();
+        ], { session: session });
+        const product = await Product.findById(req.params.productId).populate("reviews").session(session);
+
+        if (!product) {
+            await session.abortTransaction();
             session.endSession();
-            return res.status(400).send("product already reviewed");
+            return res.status(404).send("Product not found");
         }
 
-        let prc = [...product.reviews]
-        prc.push({ rating: rating });
-        product.reviews.push(reviewId)
+        const alreadyReviewed = product.reviews.find((rev) => rev.user._id.toString() === req.user._id.toString());
+        if (alreadyReviewed) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).send("Product already reviewed");
+        }
+
+        let prc = [...product.reviews];
+        prc.push({ rating: Number(rating) });
+        product.reviews.push(reviewId);
 
         if (product.reviews.length === 1) {
             product.rating = Number(rating);
-            product.reviewsNumber = 1
+            product.reviewsNumber = 1;
         } else {
             product.reviewsNumber = product.reviews.length;
             let ratingCalc = prc.map((item) => Number(item.rating)).reduce((sum, item) => sum + item, 0) / product.reviews.length;
-            product.rating = Math.round(ratingCalc)
+            product.rating = Math.round(ratingCalc);
         }
-        await product.save()
+
+        await product.save();
         await session.commitTransaction();
-        session.endSession()
-        res.send("review created")
+        session.endSession();
+        res.send("Review created");
     } catch (error) {
-        await session.abortTransaction();
-        next(error)
+        if (session) {
+            await session.abortTransaction();
+            session.endSession();
+        }
+        next(error);
     }
-}
+};
+
+
 
 const getUser = async (req, res, next) => {
     try {

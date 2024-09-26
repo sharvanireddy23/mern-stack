@@ -10,41 +10,25 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
     const { id } = useParams();
     const [quantity, setQuantity] = useState(1);
     const [showCartMessage, setShowCartMessage] = useState(false);
-    const [product, setProduct] = useState([]);
+    const [product, setProduct] = useState(null);
     const [loading, setIsLoading] = useState(true);
-    const [error, setError] = useState(false);
-    const [productReviewed, setProductReviewed] = useState(false)
+    const [error, setError] = useState(null);
+    const [reviewSuccessMessage, setReviewSuccessMessage] = useState(null);
+    const [comment, setComment] = useState('');
+    const [rating, setRating] = useState('');
 
-    const messagesEndRef = useRef(null)
+    const messagesEndRef = useRef(null);
 
     const addToCartHandler = () => {
         reduxDispatch(addToCartReduxAction(id, quantity));
-        setShowCartMessage(true)
+        setShowCartMessage(true);
     };
 
     useEffect(() => {
-        if (productReviewed) {
-            setTimeout(() => {
-                messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
-            }, 200)
+        if (reviewSuccessMessage) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [productReviewed])
-
-
-    useEffect(() => {
-        if (product.images) {
-            var options = {
-                scale: 2,
-                offset: { vertical: 0, horizontal: 0 },
-            };
-            product.images.map((image, id) => new ImageZoom(document.getElementById(`imageId${id + 1}`), options))
-        }
-
-        // new ImageZoom(document.getElementById("first"), options);
-        // new ImageZoom(document.getElementById("second"), options);
-        // new ImageZoom(document.getElementById("third"), options);
-        // new ImageZoom(document.getElementById("fourth"), options);
-    }, []);
+    }, [reviewSuccessMessage]);
 
     useEffect(() => {
         getProductDetails(id)
@@ -52,34 +36,64 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                 setProduct(data);
                 setIsLoading(false);
             })
-            .catch((error) => { setError(error.response.data.message ? error.response.data.message : error.response.data) })
-    }, [id, productReviewed])
-    console.log("product get-obe", product)
+            .catch((error) => {
+                setError(error.response?.data?.message || error.response?.data);
+            });
+    }, [id, product]);
+
+    useEffect(() => {
+        if (product && product.images) {
+            const options = {
+                scale: 2,
+                offset: { vertical: 0, horizontal: 0 },
+            };
+            product.images.forEach((_, idx) => {
+                const imgElement = document.getElementById(`imageId${idx + 1}`);
+                if (imgElement) new ImageZoom(imgElement, options);
+            });
+        }
+    }, [product]);
 
     const sendReviewHandler = (e) => {
         e.preventDefault();
-        const form = e.currentTarget.elements;
-        const formInputs = {
-            comment: form.comment.value,
-            rating: form.comment.value
-        }
+
         if (e.currentTarget.checkValidity() === true) {
-            // console.log(product._id, formInputs)
+            const formInputs = {
+                comment: comment,
+                rating: rating,
+            };
+
             writeReviewApiRequest(product._id, formInputs)
                 .then((data) => {
                     if (data === "review created") {
-                        setProductReviewed("You successfully reviewed the page")
+                        const newReview = {
+                            user: { name: userInfo.name },
+                            rating: formInputs.rating,
+                            comment: formInputs.comment,
+                            createdAt: new Date().toISOString(),
+                        };
+
+                        setProduct((prevProduct) => ({
+                            ...prevProduct,
+                            reviews: [...prevProduct.reviews, newReview],
+                            reviewsNumber: prevProduct.reviewsNumber + 1,
+                        }));
+                        setReviewSuccessMessage("You successfully reviewed the product.");
+                        setComment('');
+                        setRating('');
                     }
                 })
                 .catch((error) => {
-                    setProductReviewed(error.response.data.message ? error.response.data.message : error.response.data)
-                })
+                    setReviewSuccessMessage(
+                        error.response?.data?.message || error.response?.data || "Failed to submit the review."
+                    );
+                });
         }
-    }
+    };
 
     return (
         <>
-            <MetaComponent title={product.name} description={product.description} />
+            {product && <MetaComponent title={product.name} description={product.description} />}
             <Container>
                 <AddedToCartMessageComponent showCartMessage={showCartMessage} setShowCartMessage={setShowCartMessage} />
                 <Row className="mt-5">
@@ -90,14 +104,15 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                     ) : (
                         <>
                             <Col style={{ zIndex: 1 }} md={4}>
-                                {product.images ? product.images.map((image, id) => (
-                                    <div key={id}>
-                                        <div id={`imageId${id + 1}`} key={id}>
-                                            <Image crossOrigin="anonymous" fluid src={image.path ?? null} />
+                                {product.images &&
+                                    product.images.map((image, idx) => (
+                                        <div key={idx}>
+                                            <div id={`imageId${idx + 1}`} key={idx}>
+                                                <Image crossOrigin="anonymous" fluid src={image.path ?? null} />
+                                            </div>
+                                            <br />
                                         </div>
-                                        <br />
-                                    </div>
-                                )) : null}
+                                    ))}
                             </Col>
                             <Col md={8}>
                                 <Row>
@@ -112,14 +127,12 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                                             <ListGroup.Item>
                                                 Price <span className="fw-bold">$ {product.price}</span>
                                             </ListGroup.Item>
-                                            <ListGroup.Item>
-                                                {product.description}
-                                            </ListGroup.Item>
+                                            <ListGroup.Item>{product.description}</ListGroup.Item>
                                         </ListGroup>
                                     </Col>
                                     <Col md={4}>
                                         <ListGroup>
-                                            <ListGroup.Item>Status: {product.count > 0 ? "in stock" : "out of stock"}</ListGroup.Item>
+                                            <ListGroup.Item>Status: {product.count > 0 ? "In stock" : "Out of stock"}</ListGroup.Item>
                                             <ListGroup.Item>
                                                 Price: <span className="fw-bold">$ {product.price}</span>
                                             </ListGroup.Item>
@@ -129,7 +142,6 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                                                     value={quantity}
                                                     onChange={(e) => setQuantity(e.target.value)}
                                                     size="lg"
-                                                    className="quantity-dropdown"  // Applied z-index fix
                                                     aria-label="Default select example"
                                                 >
                                                     {[...Array(product.count).keys()].map((x) => (
@@ -151,15 +163,16 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                                     <Col className="mt-5">
                                         <h5>REVIEWS</h5>
                                         <ListGroup variant="flush">
-                                            {product.reviews && product.reviews.map((review, index) => (
-                                                <ListGroup.Item key={index}>
-                                                    {review.user.name} <br />
-                                                    <Rating readonly size={20} initialValue={review.rating} />
-                                                    <br />
-                                                    {review.createdAt.substring(0, 10)} <br />
-                                                    {review.comment}
-                                                </ListGroup.Item>
-                                            ))}
+                                            {product.reviews &&
+                                                product.reviews.map((review, index) => (
+                                                    <ListGroup.Item key={index}>
+                                                        {review.user.name} <br />
+                                                        <Rating readonly size={20} initialValue={review.rating} />
+                                                        <br />
+                                                        {review.createdAt.substring(0, 10)} <br />
+                                                        {review.comment}
+                                                    </ListGroup.Item>
+                                                ))}
                                             <div ref={messagesEndRef} />
                                         </ListGroup>
                                     </Col>
@@ -170,20 +183,35 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                                 <Form onSubmit={sendReviewHandler}>
                                     <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
                                         <Form.Label>Write a review</Form.Label>
-                                        <Form.Control name="comment" required as="textarea" disabled={!userInfo.name} rows={3} />
+                                        <Form.Control
+                                            name="comment"
+                                            required
+                                            as="textarea"
+                                            disabled={!userInfo.name}
+                                            rows={3}
+                                            value={comment}
+                                            onChange={(e) => setComment(e.target.value)}
+                                        />
                                     </Form.Group>
-                                    <Form.Select name="rating" required disabled={!userInfo.name} aria-label="Default select example">
+                                    <Form.Select
+                                        name="rating"
+                                        required
+                                        disabled={!userInfo.name}
+                                        value={rating}
+                                        onChange={(e) => setRating(e.target.value)}
+                                        aria-label="Default select example"
+                                    >
                                         <option value="">Your rating</option>
-                                        <option value="5">5 (very good)</option>
-                                        <option value="4">4 (good)</option>
-                                        <option value="3">3 (average)</option>
-                                        <option value="2">2 (bad)</option>
-                                        <option value="1">1 (awful)</option>
+                                        <option value="5">5 (Very good)</option>
+                                        <option value="4">4 (Good)</option>
+                                        <option value="3">3 (Average)</option>
+                                        <option value="2">2 (Bad)</option>
+                                        <option value="1">1 (Awful)</option>
                                     </Form.Select>
                                     <Button type="submit" disabled={!userInfo.name} className="mb-3 mt-3" variant="primary">
                                         Submit
                                     </Button>
-                                    {productReviewed}
+                                    {reviewSuccessMessage && <Alert variant="success">{reviewSuccessMessage}</Alert>}
                                 </Form>
                             </Col>
                         </>

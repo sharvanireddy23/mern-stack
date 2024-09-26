@@ -29,7 +29,7 @@ const ProductsPageComponent = ({ fetchProducts, deleteProduct }) => {
             ])
         }
         )
-    }, [])
+    }, [products])
     return (
         <Row className='m-5'>
             <Col md={2}>
