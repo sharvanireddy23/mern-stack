@@ -27,9 +27,11 @@ const ProductListPageComponent = ({ getProducts, categories }) => {
   const [paginationLinksNumber, setPaginationLinksNumber] = useState(null);
   const [pageNum, setPageNum] = useState(null)
 
-  const { categoryName } = useParams() || "";
-  const { pageNumParam } = useParams() || 1;
-  const { searchQuery } = useParams() || ""
+  const { categoryName, pageNumParam = 1, searchQuery = '' } = useParams();
+
+  // const { categoryName } = useParams() || "";
+  // const { pageNumParam } = useParams() || 1;
+  // const { searchQuery } = useParams() || ""
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -70,8 +72,9 @@ const ProductListPageComponent = ({ getProducts, categories }) => {
 
 
   useEffect(() => {
-    getProducts()
+    getProducts(categoryName, pageNumParam, searchQuery, filters, sortOption)
       .then((products) => {
+        console.log(products)
         setProducts(products.products);
         setPaginationLinksNumber(products.paginationLinksNumber);
         setPageNum(products.pageNum)
@@ -157,7 +160,7 @@ const ProductListPageComponent = ({ getProducts, categories }) => {
         </Col>
       </Row>
     </Container>
-  )
+  ) 
 }
 
 export default ProductListPageComponent

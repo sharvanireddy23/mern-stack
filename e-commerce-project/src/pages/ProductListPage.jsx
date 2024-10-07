@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 
 const ProductListPage = () => {
   const { categories } = useSelector((state) => state.getCategories)
+  // console.log(categories)
   let filtersUrl = ""
   const proceedFilters = (filters) => {
     filtersUrl = "";
@@ -45,9 +46,11 @@ const ProductListPage = () => {
 
   const getProducts = async (categoryName = "", pageNumParam = null, searchQuery = "", filters = {}, sortOption = "") => {
     filtersUrl = proceedFilters(filters);
-    console.log(filters)
+    // console.log(filters)
     const search = searchQuery ? `search/${searchQuery}/` : "";
-    const category = categoryName ? `category/${categoryName}/` : "";
+    // console.log(search,"hello search")
+    const category = categoryName ? `category/${categoryName}` : "";
+    // console.log("catvdgd",category)
     const url = `/api/products/${category}${search}?pageNum=${pageNumParam}${filtersUrl}&sort=${sortOption}`
     const { data } = await axios.get(url)
     // console.log(data)

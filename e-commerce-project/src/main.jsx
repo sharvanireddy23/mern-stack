@@ -10,8 +10,8 @@ import store from './redux/store.js'; // Ensure this is correctly importing the 
 // Render the app with the Provider wrapped around
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <StrictMode>
+    {/* <StrictMode> */}
       <App />
-    </StrictMode>
+    {/* </StrictMode> */}
   </Provider>
 );

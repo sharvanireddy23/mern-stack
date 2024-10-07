@@ -32,16 +32,17 @@ const AdminChatRoomComponent = ({ chatRoom, roomIndex, socket, socketUser }) => 
       user: socketUser,
       message: v
     })
-    setRerender(!rerender)
-    msg.focus();
-    dispatch(setMessageRecevied(false))
+    // msg.value = ""
     setTimeout(() => {
       msg.value = ""
+      msg.focus();
       const chatMessages = document.querySelector(`.chat-msg${socketUser}`)
       if (chatMessages) {
         chatMessages.scrollTop = chatMessages.scrollHeight
       }
     }, 200)
+    setRerender(!rerender)
+    dispatch(setMessageRecevied(false))
   }
 
   useEffect(() => {
@@ -49,7 +50,7 @@ const AdminChatRoomComponent = ({ chatRoom, roomIndex, socket, socketUser }) => 
     if (chatMessages) {
       chatMessages.scrollTop = chatMessages.scrollHeight
     }
-  })
+  }, [chatRoom, socketUser])
 
 
   return (

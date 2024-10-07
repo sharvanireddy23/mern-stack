@@ -8,7 +8,8 @@ const cookieParser = require("cookie-parser")
 const app = express()
 
 app.use(cors({
-  origin: '*'
+  origin: '*',
+  credentials: true,
 }));
 // const port = 3000
 const httpServer = createServer(app);

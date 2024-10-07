@@ -39,7 +39,7 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
             .catch((error) => {
                 setError(error.response?.data?.message || error.response?.data);
             });
-    }, [id, product]);
+    }, [id, product,comment,rating]);
 
     useEffect(() => {
         if (product && product.images) {
@@ -56,13 +56,13 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
 
     const sendReviewHandler = (e) => {
         e.preventDefault();
-
+    
         if (e.currentTarget.checkValidity() === true) {
             const formInputs = {
                 comment: comment,
                 rating: rating,
             };
-
+    
             writeReviewApiRequest(product._id, formInputs)
                 .then((data) => {
                     if (data === "review created") {
@@ -72,16 +72,16 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                             comment: formInputs.comment,
                             createdAt: new Date().toISOString(),
                         };
-
+    
                         setProduct((prevProduct) => ({
                             ...prevProduct,
                             reviews: [...prevProduct.reviews, newReview],
                             reviewsNumber: prevProduct.reviewsNumber + 1,
                         }));
-                        setReviewSuccessMessage("You successfully reviewed the product.");
-                        setComment('');
-                        setRating('');
                     }
+                    setComment('');
+                    setRating('');
+                    setReviewSuccessMessage("You successfully reviewed the product.");
                 })
                 .catch((error) => {
                     setReviewSuccessMessage(
@@ -90,7 +90,7 @@ const ProductDetailsPageComponent = ({ addToCartReduxAction, reduxDispatch, getP
                 });
         }
     };
-
+    
     return (
         <>
             {product && <MetaComponent title={product.name} description={product.description} />}
