@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "server-prod": "node server.js",
     "server-dev": "npx nodemon server.js",
-    "client": "npm run dev --prefix ../e-commerce-project",
+    "client": "npm run dev --prefix ../frontend",
     "dev": "concurrently --kill-others-on-fail \"npm run server-dev\" \"npm run client\"",
     "seed:data": "node seeders/seeder.js",
     "seed:data-d": "node seeders/seeder.js -d"

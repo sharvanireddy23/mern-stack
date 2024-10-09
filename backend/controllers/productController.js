@@ -251,7 +251,7 @@ const adminUpload = async (req, res, next) => {
         const path = require("path");
         const { v4: uuidv4 } = require("uuid");
 
-        const uploadDirectory = path.resolve(__dirname, "../../e-commerce-project", "public", "images", "products");
+        const uploadDirectory = path.resolve(__dirname, "../../frontend", "public", "images", "products");
 
         let product = await Product.findById(req.query.productId).orFail();
 
@@ -303,7 +303,7 @@ const adminDeleteProductImage = async (req, res, next) => {
     }
     try {
         const path = require("path");
-        const finalPath = path.resolve("../e-commerce-project/public") + imagePath;
+        const finalPath = path.resolve("../frontend/public") + imagePath;
 
         const fs = require("fs");
         fs.unlink(finalPath, (err) => {
